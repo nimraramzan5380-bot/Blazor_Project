@@ -1,0 +1,56 @@
+﻿@page "/students"
+@using Microsoft.AspNetCore.Components.Authorization
+@using StudentCRUDapp.Model
+@inject StudentCRUDapp.Data.AppDbContexts db
+@rendermode InteractiveServer
+
+<h3>Student Table </h3>
+
+<table class="table table-dark table-hover table-striped table-bordered">
+
+	<thead>
+
+		<tr>
+
+			<th>ID</th>
+			<th>NAME</th>
+			<th>AGE</th>
+			<th>COURSE</th>
+			<th>ACTIONS</th>
+		</tr>
+	</thead>
+
+	<tbody>
+
+		@foreach (var std in students)
+		{
+			<tr>
+				<td> @std.ID</td>
+				<td> @std.Name</td>
+				<td> @std.Age</td>
+				<td> @std.Course</td>
+				<td>
+					<button class="btn btn-primary">Edit</button>
+					<button class="btn btn-danger">Delete</button>
+				</td>
+			</tr>
+		}
+	</tbody>
+
+</table>
+
+
+@code {
+
+	List<Student> students = new();
+
+	void LoadStudents()
+	{
+		students = db.Students.ToList();
+	}
+	protected override void OnInitialized()
+	{
+		LoadStudents();
+	}
+
+}
