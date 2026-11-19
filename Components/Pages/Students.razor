@@ -3,6 +3,31 @@
 @using StudentCRUDapp.Model
 @inject StudentCRUDapp.Data.AppDbContexts db
 @rendermode InteractiveServer
+@inject IJSRuntime JS
+
+<h3>Add Student Record</h3>
+<EditForm Model="@student" OnValidSubmit="AddStudent" FormName="AddStudentForm">
+	<DataAnnotationsValidator/>
+<ValidationSummary/>
+<div>
+<InputText placeholder ="Name" @bind-value="student.Name" class="form-control"/>
+<ValidationMessage For="@(() => student.Name)"/>
+</div>
+
+<div>
+<InputNumber placeholder ="Age" @bind-value="student.Age" class="form-control"/>
+		<ValidationMessage For="@(() => student.Age)" />
+</div>
+
+<div>
+<InputText placeholder ="Course" @bind-value="student.Course" class="form-control"/>
+		<ValidationMessage For="@(() => student.Course)" />
+</div>
+
+<button type="submit" class="btn btn-primary">Add Student</button>
+
+</EditForm>
+
 
 <h3>Student Table </h3>
 
@@ -22,27 +47,123 @@
 
 	<tbody>
 
+		@{
+			int stdID = 1;
+		}
 		@foreach (var std in students)
+		
 		{
 			<tr>
-				<td> @std.ID</td>
+				<td> @(stdID++)</td>
 				<td> @std.Name</td>
 				<td> @std.Age</td>
 				<td> @std.Course</td>
 				<td>
-					<button class="btn btn-primary">Edit</button>
-					<button class="btn btn-danger">Delete</button>
+					<button class="btn btn-primary"  @onclick="() => EditStudent(std)">Edit</button>
+					@*@<button class="btn btn-danger" @onclick="() => DeleteStudent(std.ID)" >Delete</button>*@
+					<button class="btn btn-danger" @onclick="() => ConfrimDelete(std.ID)">Delete</button>
 				</td>
 			</tr>
 		}
 	</tbody>
 
 </table>
+<hr/>
+
+@if(isEdit )
+{
+	<h3>Update Student Record</h3>
+
+	<EditForm Model="@editstudent" OnValidSubmit="UpdateStudent" FormName="UpdateStudentForm">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+		<div>
+			<InputText placeholder="Name" @bind-value="editstudent.Name" class="form-control" />
+			<ValidationMessage For="@(() => editstudent.Name)" />
+		</div>
+
+		<div>
+			<InputNumber placeholder="Age" @bind-value="editstudent.Age" class="form-control" />
+			<ValidationMessage For="@(() =>	editstudent.Age)" />
+		</div>
+
+		<div>
+			<InputText placeholder="Course" @bind-value="editstudent.Course" class="form-control" />
+			<ValidationMessage For="@(() => editstudent.Course)" />
+		</div>
+
+		<button type="submit" class="btn btn-primary">Update Student</button>
+
+	</EditForm>
+}
 
 
 @code {
 
+	Student student = new Student();
+	Student editstudent = new Student();
+
 	List<Student> students = new();
+	bool isEdit = false;
+
+	void AddStudent()
+	{
+		db.Students.Add(student);
+		db.SaveChanges();
+		student = new Student();
+		LoadStudents();
+	}
+
+	void EditStudent(Student s)
+	{
+		editstudent =new Student
+		{
+			ID = s.ID,
+			Name = s.Name,
+			Age = s.Age,
+			Course = s.Course
+		};
+		isEdit = true;
+	}
+
+	void UpdateStudent()
+	{
+		var s = db.Students.Find(editstudent.ID);
+		if(s!= null)
+		{
+			s.Name = editstudent.Name;
+			s.Age = editstudent.Age;
+			s.Course = editstudent.Course;
+
+		}
+
+		db.SaveChanges();
+		editstudent = new Student();
+		isEdit = false;
+		LoadStudents();
+	}
+
+	async Task ConfrimDelete(int id)
+	{
+		bool confrimed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this student?");
+		if(confrimed == true)
+		{
+			DeleteStudent(id);
+		}
+
+	}
+
+	void DeleteStudent(int id)
+	{
+		var s = db.Students.Find(id);
+		if(s != null)
+		{
+			db.Students.Remove(s);
+			db.SaveChanges();
+			LoadStudents();
+		}
+	}
+
 
 	void LoadStudents()
 	{
